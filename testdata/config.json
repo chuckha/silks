@@ -1,0 +1,5 @@
+{
+  "SQLDialect": "sqlite",
+  "ModelFile": "./testdata/models.go",
+  "OutputDir": "."
+}
