@@ -80,6 +80,7 @@ func setup(dialect string) (*silks.App, error) {
 	adapter := &silks.AppAdapter{}
 	usecaes := silks.AppUseCases{
 		CreateTableGenerator: &usecases.CreateTableGenerator{sqlGen},
+		FieldAdder:           &usecases.FieldAdder{sqlGen},
 	}
 	presenter := &silks.AppPresenter{}
 	return silks.NewApp(adapter, usecaes, presenter), nil

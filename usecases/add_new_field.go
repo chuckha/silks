@@ -20,6 +20,7 @@ func (fa *FieldAdder) AddField(modelFile *core.ModelFile, addcfg *core.AddFieldC
 	// has a side effect of changing the AST
 	modelFile.AddModelField(addcfg.Model, field)
 
+	tableName := modelFile.Models[addcfg.Model].TableName
 	// get the sql changes
-	return fa.SQLFieldAddGenerator.AddField(addcfg.Model, NewColDef(addcfg.ColumnName, addcfg.FieldType))
+	return fa.SQLFieldAddGenerator.AddField(tableName, NewColDef(addcfg.ColumnName, addcfg.FieldType))
 }

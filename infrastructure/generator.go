@@ -8,7 +8,7 @@ import (
 
 type SQLSyntaxGenerator interface {
 	CreateTable(tableName string, colDefs []*usecases.ColDef) (string, error)
-	AddField(tableName string, colDef *usecases.ColDef) string
+	AddField(tableName string, colDef *usecases.ColDef) (string, error)
 }
 
 type SQLGeneratorFactory struct{}

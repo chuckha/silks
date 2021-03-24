@@ -20,8 +20,8 @@ func (s *SQLiteGenerator) CreateTable(tableName string, colDefs []*usecases.ColD
 	return fmt.Sprintf("CREATE TABLE %s ( %s );", tableName, coldefs), nil
 }
 
-func (s *SQLiteGenerator) AddField(tableName string, colDef *usecases.ColDef) string {
-	return fmt.Sprintf("ALTER TABLE %s ADD COLUMN %s %s;", tableName, colDef.Name, colDef.Type)
+func (s *SQLiteGenerator) AddField(tableName string, colDef *usecases.ColDef) (string, error) {
+	return fmt.Sprintf("ALTER TABLE %s ADD COLUMN %s %s;", tableName, colDef.Name, colDef.Type), nil
 }
 
 func (s *SQLiteGenerator) goTypeToSQLiteType(goType string) (string, error) {
