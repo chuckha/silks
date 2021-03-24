@@ -1,6 +1,6 @@
 # Silks
 
-Another way to manage migrations if you have defined some structs that you want stored in a database.
+Another way to manage migrations.
 
 ## When and how to use this project
 
