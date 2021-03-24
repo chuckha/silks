@@ -1,18 +1,10 @@
 package silks
 
 import (
-	"bytes"
 	"go/ast"
-	"go/format"
-	"go/parser"
-	"go/token"
-	"os"
 
-	"github.com/pkg/errors"
-
-	"github.com/chuckha/silks/core"
-	"github.com/chuckha/silks/infrastructure"
-	"github.com/chuckha/silks/usecases"
+	"github.com/chuckha/silks/internal/core"
+	"github.com/chuckha/silks/internal/usecases"
 )
 
 type App struct {
@@ -29,16 +21,16 @@ func NewApp(a Adapter, u UseCases, p Presenter) *App {
 	}
 }
 
-func (s *App) GenerateCreateTable(sqldialect, modelFile string) (string, error) {
-	mf, err := s.adapter.AdaptCreateTable(sqldialect, modelFile)
+func (s *App) GenerateCreateTable(modelFile string) (string, error) {
+	mf, err := s.adapter.AdaptCreateTable(modelFile)
 	if err != nil {
 		return "", err
 	}
 	return s.useCases.GenerateCreateTable(mf)
 }
 
-func (s *App) AddField(sqldialect, modelFile, model, field, fieldType, colName string) (string, string, error) {
-	mf, afc, err := s.adapter.AddField(sqldialect, modelFile, model, field, fieldType, colName)
+func (s *App) AddField(modelFile, model, field, fieldType, colName string) (string, string, error) {
+	mf, afc, err := s.adapter.AddField(modelFile, model, field, fieldType, colName)
 	if err != nil {
 		return "", "", err
 	}
@@ -46,77 +38,51 @@ func (s *App) AddField(sqldialect, modelFile, model, field, fieldType, colName s
 	if err != nil {
 		return "", "", err
 	}
-	fset, tree := mf.GetASTData()
-	updatedModel, err := s.presenter.RewriteModelFile(fset, tree)
+	tree := mf.ToAST()
+	updatedModel, err := s.presenter.RewriteModelFile(tree)
 	return addStmt, updatedModel, err
 }
 
-type Adapter interface {
-	AdaptCreateTable(sqldialect, modelFile string) (*core.ModelFile, error)
-	AddField(sqldialect, modelFile, model, field, fieldType, colName string) (*core.ModelFile, *core.AddFieldConfiguration, error)
+func (s *App) RenameField(modelFile, model, field, toField, toColName string) (string, string, error) {
+	mf, rfc, err := s.adapter.RenameField(modelFile, model, field, toField, toColName)
+	if err != nil {
+		return "", "", err
+	}
+	renameStmt, err := s.useCases.RenameField(mf, rfc)
+	if err != nil {
+		return "", "", err
+	}
+	tree := mf.ToAST()
+	updatedModel, err := s.presenter.RewriteModelFile(tree)
+	return renameStmt, updatedModel, err
 }
 
+// Adapter takes input from another system and converts it to something a usecase can understand
+type Adapter interface {
+	AdaptCreateTable(modelFile string) (*core.ModelFile, error)
+	AddField(modelFile, model, field, fieldType, colName string) (*core.ModelFile, *core.AddFieldConfiguration, error)
+	RenameField(modelFile, model, field, toField, toColName string) (*core.ModelFile, *core.RenameFieldConfiguration, error)
+}
+
+// UseCases define the behavior of the usecases
 type UseCases interface {
 	GenerateCreateTable(model *core.ModelFile) (string, error)
 	AddField(modelFile *core.ModelFile, addcfg *core.AddFieldConfiguration) (string, error)
+	RenameField(modelFile *core.ModelFile, renameCfg *core.RenameFieldConfiguration) (string, error)
 }
 
+// AppUseCases are the actual implementation
 type AppUseCases struct {
 	*usecases.CreateTableGenerator
 	*usecases.FieldAdder
+	*usecases.FieldRenamer
 }
 
 type GeneratorFactory interface {
-	Get(dialect string) (infrastructure.SQLSyntaxGenerator, error)
+	Get(dialect string) (SQLSyntaxGenerator, error)
 }
 
-type AppAdapter struct{}
-
-func (s *AppAdapter) AdaptCreateTable(sqldialect, modelFile string) (*core.ModelFile, error) {
-	return s.cfgInputToModelFile(sqldialect, modelFile)
-}
-
-func (s *AppAdapter) AddField(sqldialect, modelFile, model, field, fieldType, colName string) (*core.ModelFile, *core.AddFieldConfiguration, error) {
-	mf, err := s.cfgInputToModelFile(sqldialect, modelFile)
-	if err != nil {
-		return nil, nil, err
-	}
-	afc, err := core.NewAddFieldConfiguration(model, field, fieldType, colName)
-	if err != nil {
-		return nil, nil, err
-	}
-	return mf, afc, nil
-}
-
-func (s *AppAdapter) cfgInputToModelFile(sqlDialect, modelFile string) (*core.ModelFile, error) {
-	// quickly ensure the file exists
-	data, err := os.ReadFile(modelFile)
-	if err != nil {
-		return nil, errors.WithStack(err)
-	}
-	cfg, err := core.NewConfiguration(sqlDialect, data)
-	if err != nil {
-		return nil, err
-	}
-	// parse the model file into go (error if go syntax at this point)
-	fset := token.NewFileSet()
-	file, err := parser.ParseFile(fset, "", cfg.ModelFile, parser.ParseComments)
-	if err != nil {
-		return nil, errors.WithStack(err)
-	}
-
-	return core.NewModelFile(fset, file)
-}
-
+// Presenter changes the result of a usecase to something user-friendly
 type Presenter interface {
-	RewriteModelFile(*token.FileSet, *ast.File) (string, error)
-}
-
-type AppPresenter struct{}
-
-func (a *AppPresenter) RewriteModelFile(fset *token.FileSet, file *ast.File) (string, error) {
-	var buf bytes.Buffer
-	//err := printer.Fprint(&buf, fset, file)
-	err := format.Node(&buf, fset, file)
-	return buf.String(), err
+	RewriteModelFile(*ast.File) (string, error)
 }

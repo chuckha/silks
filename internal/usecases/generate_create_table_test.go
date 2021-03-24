@@ -4,7 +4,7 @@ import (
 	"strings"
 	"testing"
 
-	"github.com/chuckha/silks/core"
+	"github.com/chuckha/silks/internal/core"
 )
 
 type gen struct{}
@@ -20,23 +20,25 @@ func (g *gen) CreateTable(tableName string, coldefs []*ColDef) (string, error) {
 func TestCreateTableGenerator_GenerateCreateTable(t *testing.T) {
 	createTableGen := &CreateTableGenerator{&gen{}}
 
-	model, err := core.NewModel("User", "users")
+	model, err := core.NewModel("User")
 	if err != nil {
 		t.Fatal(err)
 	}
-	field1, err := core.NewField("Username", "username", "string")
-	if err != nil {
-		t.Fatal(err)
+	for _, f := range []struct{ name, typ, col string }{
+		{"Username", "string", "username"},
+		{"Age", "int", "age"},
+	} {
+		field, err := core.NewField(f.name, f.typ, f.col)
+		if err != nil {
+			t.Fatal(err)
+		}
+		if err := model.AddField(field); err != nil {
+			t.Fatal(err)
+		}
 	}
-	field2, err := core.NewField("Age", "age", "int")
-	if err != nil {
-		t.Fatal(err)
-	}
-	model.AddField(field1)
-	model.AddField(field2)
+
 	models := &core.ModelFile{
-		Models:     map[string]*core.Model{model.Name: model},
-		Attributes: nil,
+		Models: map[string]*core.Model{model.Name: model},
 	}
 	o, err := createTableGen.GenerateCreateTable(models)
 	if err != nil {

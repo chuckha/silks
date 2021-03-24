@@ -11,7 +11,7 @@ import (
 
 	_ "github.com/mattn/go-sqlite3"
 
-	"github.com/chuckha/silks/usecases"
+	"github.com/chuckha/silks/internal/usecases"
 )
 
 func TestSQLiteGenerator(t *testing.T) {

@@ -6,7 +6,7 @@ import (
 
 	"github.com/pkg/errors"
 
-	"github.com/chuckha/silks/usecases"
+	"github.com/chuckha/silks/internal/usecases"
 )
 
 type SQLiteGenerator struct{}
@@ -20,8 +20,12 @@ func (s *SQLiteGenerator) CreateTable(tableName string, colDefs []*usecases.ColD
 	return fmt.Sprintf("CREATE TABLE %s ( %s );", tableName, coldefs), nil
 }
 
-func (s *SQLiteGenerator) AddField(tableName string, colDef *usecases.ColDef) (string, error) {
-	return fmt.Sprintf("ALTER TABLE %s ADD COLUMN %s %s;", tableName, colDef.Name, colDef.Type), nil
+func (s *SQLiteGenerator) AddField(tableName string, colDef *usecases.ColDef) string {
+	return fmt.Sprintf("ALTER TABLE %s ADD COLUMN %s %s;", tableName, colDef.Name, colDef.Type)
+}
+
+func (s *SQLiteGenerator) RenameField(tableName, fromColName, toColName string) string {
+	return fmt.Sprintf("ALTER TABLE %s RENAME COLUMN %s TO %s;", tableName, fromColName, toColName)
 }
 
 func (s *SQLiteGenerator) goTypeToSQLiteType(goType string) (string, error) {

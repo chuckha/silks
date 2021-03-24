@@ -7,17 +7,15 @@ import (
 type File string
 
 type Configuration struct {
-	SQLDialect string
-	ModelFile  []byte
+	ModelFile []byte
 }
 
-func NewConfiguration(dialect string, data []byte) (*Configuration, error) {
+func NewConfiguration(data []byte) (*Configuration, error) {
 	if len(data) == 0 {
 		return nil, errors.New("model file cannot be empty")
 	}
 	return &Configuration{
-		SQLDialect: dialect,
-		ModelFile:  data,
+		ModelFile: data,
 	}, nil
 }
 
@@ -49,5 +47,36 @@ func NewAddFieldConfiguration(model, fieldToAdd, fieldType, columnName string) (
 		FieldToAdd: fieldToAdd,
 		FieldType:  fieldType,
 		ColumnName: columnName,
+	}, nil
+}
+
+type RenameFieldConfiguration struct {
+	Model         string
+	From          string
+	To            string
+	NewColumnName string
+}
+
+func NewRenameFieldConfiguration(model, from, to, toColumnName string) (*RenameFieldConfiguration, error) {
+	if model == "" {
+		return nil, errors.New("must specify model to update")
+	}
+	if from == "" {
+		return nil, errors.New("must specify field to rename")
+	}
+	if to == "" {
+		return nil, errors.New("must specify what to rename the field to")
+	}
+	if from == to {
+		return nil, errors.New("cannot rename to the same thing")
+	}
+	if toColumnName == "" {
+		toColumnName = to
+	}
+	return &RenameFieldConfiguration{
+		Model:         model,
+		From:          from,
+		To:            to,
+		NewColumnName: toColumnName,
 	}, nil
 }

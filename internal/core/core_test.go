@@ -2,6 +2,7 @@ package core
 
 import (
 	"bytes"
+	"fmt"
 	"go/format"
 	"go/parser"
 	"go/token"
@@ -16,25 +17,26 @@ import "time"
 // htelkd
 // sdfsdkf
 
+// User defines the users model
+// User.tablename=users
 type User struct {
 	ID string ` + "`slk:\"id\"`" + `
 	Created time.Time ` + "`slk:\"created\"`" + `
 	Updated time.Time
 }
 
-// User.tablename=users
 
 `
 
 	fset := token.NewFileSet()
 	file, err := parser.ParseFile(fset, "", testInput, parser.ParseComments)
 	if err != nil {
-		t.Fatal(err)
+		t.Fatal(fmt.Sprintf("%+v", err))
 	}
 
-	o, err := NewModelFile(fset, file)
+	o, err := NewModelFile(file)
 	if err != nil {
-		t.Fatal(err)
+		t.Fatal(fmt.Sprintf("%+v", err))
 	}
 	if len(o.Models) != 1 {
 		t.Fatal("expected 1 model but didn't get any")
@@ -42,19 +44,19 @@ type User struct {
 	if len(o.Models["User"].Fields) != 3 {
 		t.Fatalf("expected 3 fields but got %d", len(o.Models["User"].Fields))
 	}
-	if o.Models["User"].TableName != "users" {
-		t.Fatalf("expected name to be users but it was %s", o.Models["User"].TableName)
+	if o.Models["User"].GetTableName() != "users" {
+		t.Fatalf("expected name to be users but it was %s", o.Models["User"].GetTableName())
 	}
-	if o.Models["User"].Fields["ID"].ColName != "id" {
-		t.Fatalf("not reading the struct tag data correctly, should be %q but is %q", "id", o.Models["User"].Fields["ID"].ColName)
+	if o.Models["User"].Fields["ID"].colName != "id" {
+		t.Fatalf("not reading the struct tag data correctly, should be %q but is %q", "id", o.Models["User"].Fields["ID"].colName)
 	}
-	if o.Models["User"].Fields["Updated"].ColName != "updated" {
+	if o.Models["User"].Fields["Updated"].colName != "updated" {
 		t.Fatal("failed to automatically downcase the field name")
 	}
 	var buf bytes.Buffer
-	fset, tree := o.GetASTData()
+	tree := o.ToAST()
 	if err := format.Node(&buf, fset, tree); err != nil {
-		t.Fatal(err)
+		t.Fatal(fmt.Sprintf("%+v", err))
 	}
 	//fmt.Println(buf.String())
 

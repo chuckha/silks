@@ -7,24 +7,24 @@ import (
 )
 
 func TestNewModel(t *testing.T) {
-	model, err := NewModel("Animal", "")
+	model, err := NewModel("Animal")
 	if err != nil {
 		t.Fatal(err)
 	}
 	if model.Name != "Animal" {
 		t.Fatal("expected model name to be `Animal`, but it was not")
 	}
-	if model.TableName != model.Name {
-		t.Fatal("defaulting table name to model name is broken")
+	if model.GetTableName() != "Animal" {
+		t.Fatal("expected table name to be `Animal` but it was not")
 	}
 }
 
 func TestNewModelFromAST(t *testing.T) {
-	mod, err := ModelFromAST(typeSpec())
+	mod, err := NewModelFromAST(typeSpec())
 	if err != nil {
 		t.Fatal(err)
 	}
-	field, err := NewField("Quantity", "quant_ity", "int")
+	field, err := NewField("Quantity", "int", "quant_ity")
 	if err != nil {
 		t.Fatal(err)
 	}

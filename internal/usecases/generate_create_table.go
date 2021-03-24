@@ -3,7 +3,7 @@ package usecases
 import (
 	"strings"
 
-	"github.com/chuckha/silks/core"
+	"github.com/chuckha/silks/internal/core"
 )
 
 type CreateTableSQLCreator interface {
@@ -19,9 +19,9 @@ func (c *CreateTableGenerator) GenerateCreateTable(modelFile *core.ModelFile) (s
 	for _, model := range modelFile.Models {
 		colDefs := []*ColDef{}
 		for _, field := range model.Fields {
-			colDefs = append(colDefs, NewColDef(field.ColName, field.Type))
+			colDefs = append(colDefs, NewColDef(field.GetColName(), field.Type))
 		}
-		stmt, err := c.Gen.CreateTable(model.TableName, colDefs)
+		stmt, err := c.Gen.CreateTable(model.GetTableName(), colDefs)
 		if err != nil {
 			return "", err
 		}
