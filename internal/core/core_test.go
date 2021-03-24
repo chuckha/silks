@@ -47,10 +47,10 @@ type User struct {
 	if o.Models["User"].GetTableName() != "users" {
 		t.Fatalf("expected name to be users but it was %s", o.Models["User"].GetTableName())
 	}
-	if o.Models["User"].Fields["ID"].colName != "id" {
-		t.Fatalf("not reading the struct tag data correctly, should be %q but is %q", "id", o.Models["User"].Fields["ID"].colName)
+	if o.Models["User"].Fields["ID"].GetColName() != "id" {
+		t.Fatalf("not reading the struct tag data correctly, should be %q but is %q", "id", o.Models["User"].Fields["ID"].GetColName())
 	}
-	if o.Models["User"].Fields["Updated"].colName != "updated" {
+	if o.Models["User"].Fields["Updated"].GetColName() != "updated" {
 		t.Fatal("failed to automatically downcase the field name")
 	}
 	var buf bytes.Buffer
