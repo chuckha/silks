@@ -11,6 +11,7 @@ import (
 	"github.com/pkg/errors"
 
 	"github.com/chuckha/silks/core"
+	"github.com/chuckha/silks/infrastructure"
 	"github.com/chuckha/silks/usecases"
 )
 
@@ -36,16 +37,18 @@ func (s *App) GenerateCreateTable(sqldialect, modelFile string) (string, error) 
 	return s.useCases.GenerateCreateTable(mf)
 }
 
-func (s *App) AddField(sqldialect, modelFile, model, field, fieldType, colName string) (string, error) {
+func (s *App) AddField(sqldialect, modelFile, model, field, fieldType, colName string) (string, string, error) {
 	mf, afc, err := s.adapter.AddField(sqldialect, modelFile, model, field, fieldType, colName)
 	if err != nil {
-		return "", err
+		return "", "", err
 	}
-	if err := s.useCases.AddField(mf, afc); err != nil {
-		return "", err
+	addStmt, err := s.useCases.AddField(mf, afc)
+	if err != nil {
+		return "", "", err
 	}
 	fset, tree := mf.GetASTData()
-	return s.presenter.RewriteModelFile(fset, tree)
+	updatedModel, err := s.presenter.RewriteModelFile(fset, tree)
+	return addStmt, updatedModel, err
 }
 
 type Adapter interface {
@@ -55,7 +58,7 @@ type Adapter interface {
 
 type UseCases interface {
 	GenerateCreateTable(model *core.ModelFile) (string, error)
-	AddField(modelFile *core.ModelFile, addcfg *core.AddFieldConfiguration) error
+	AddField(modelFile *core.ModelFile, addcfg *core.AddFieldConfiguration) (string, error)
 }
 
 type AppUseCases struct {
@@ -64,7 +67,7 @@ type AppUseCases struct {
 }
 
 type GeneratorFactory interface {
-	Get(dialect core.SQLDialect) core.SQLSyntaxGenerator
+	Get(dialect string) (infrastructure.SQLSyntaxGenerator, error)
 }
 
 type AppAdapter struct{}

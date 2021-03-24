@@ -4,11 +4,22 @@ import (
 	"github.com/chuckha/silks/core"
 )
 
-type FieldAdder struct {
-	core.SQLSyntaxGenerator
+type SQLFieldAddGenerator interface {
+	AddField(tableName string, colDef *ColDef) (string, error)
 }
 
-func (fa *FieldAdder) AddField(modelFile *core.ModelFile, addcfg *core.AddFieldConfiguration) error {
-	modelFile.AddModelField(addcfg.Model, addcfg.FieldToAdd, addcfg.FieldType, addcfg.ColumnName)
-	return nil
+type FieldAdder struct {
+	SQLFieldAddGenerator
+}
+
+func (fa *FieldAdder) AddField(modelFile *core.ModelFile, addcfg *core.AddFieldConfiguration) (string, error) {
+	field, err := core.NewField(addcfg.FieldToAdd, addcfg.FieldType, addcfg.ColumnName)
+	if err != nil {
+		return "", err
+	}
+	// has a side effect of changing the AST
+	modelFile.AddModelField(addcfg.Model, field)
+
+	// get the sql changes
+	return fa.SQLFieldAddGenerator.AddField(addcfg.Model, NewColDef(addcfg.ColumnName, addcfg.FieldType))
 }

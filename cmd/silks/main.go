@@ -59,11 +59,12 @@ func main() {
 		if err != nil {
 			panic(err)
 		}
-		addsql, err := app.AddField(config.SQLDialect, config.ModelFile, *model, *field, *fieldType, *colName)
+		addsql, updateModel, err := app.AddField(config.SQLDialect, config.ModelFile, *model, *field, *fieldType, *colName)
 		if err != nil {
 			panic(err)
 		}
 		fmt.Println(addsql)
+		fmt.Println(updateModel)
 	default:
 		flag.PrintDefaults()
 		os.Exit(1)

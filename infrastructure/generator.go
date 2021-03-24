@@ -3,18 +3,19 @@ package infrastructure
 import (
 	"github.com/pkg/errors"
 
-	"github.com/chuckha/silks/core"
+	"github.com/chuckha/silks/usecases"
 )
+
+type SQLSyntaxGenerator interface {
+	CreateTable(tableName string, colDefs []*usecases.ColDef) (string, error)
+	AddField(tableName string, colDef *usecases.ColDef) string
+}
 
 type SQLGeneratorFactory struct{}
 
-func (*SQLGeneratorFactory) Get(dialect string) (core.SQLSyntaxGenerator, error) {
-	dlct, err := core.NewSQLDialect(dialect)
-	if err != nil {
-		return nil, err
-	}
-	switch dlct {
-	case core.SQLite:
+func (*SQLGeneratorFactory) Get(dialect string) (SQLSyntaxGenerator, error) {
+	switch dialect {
+	case "sqlite", "": // empty string defaults to sqlite
 		return &SQLiteGenerator{}, nil
 	default:
 		return nil, errors.Errorf("unknown sql dialect %q", dialect)

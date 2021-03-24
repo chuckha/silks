@@ -4,39 +4,19 @@ import (
 	"github.com/pkg/errors"
 )
 
-type SQLDialect string
-
-const (
-	SQLite SQLDialect = "sqlite"
-	// todo....
-)
-
-func NewSQLDialect(s string) (SQLDialect, error) {
-	switch s {
-	case "sqlite":
-		return SQLite, nil
-	default:
-		return "", errors.Errorf("unknown dialect %q", s)
-	}
-}
-
 type File string
 
 type Configuration struct {
-	SQLDialect SQLDialect
+	SQLDialect string
 	ModelFile  []byte
 }
 
 func NewConfiguration(dialect string, data []byte) (*Configuration, error) {
-	sqlDialect, err := NewSQLDialect(dialect)
-	if err != nil {
-		return nil, err
-	}
 	if len(data) == 0 {
 		return nil, errors.New("model file cannot be empty")
 	}
 	return &Configuration{
-		SQLDialect: sqlDialect,
+		SQLDialect: dialect,
 		ModelFile:  data,
 	}, nil
 }

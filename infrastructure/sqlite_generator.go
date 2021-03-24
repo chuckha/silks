@@ -6,35 +6,22 @@ import (
 
 	"github.com/pkg/errors"
 
-	"github.com/chuckha/silks/core"
+	"github.com/chuckha/silks/usecases"
 )
 
 type SQLiteGenerator struct{}
 
-func (s *SQLiteGenerator) CreateTable(model *core.Model) (string, error) {
+func (s *SQLiteGenerator) CreateTable(tableName string, colDefs []*usecases.ColDef) (string, error) {
 	cols := []string{}
-	for _, field := range model.Fields {
-		colDef, err := s.fieldToColDef(field)
-		if err != nil {
-			return "", err
-		}
-		cols = append(cols, colDef)
+	for _, colDef := range colDefs {
+		cols = append(cols, fmt.Sprintf("%s %s", colDef.Name, colDef.Type))
 	}
 	coldefs := strings.Join(cols, ", ")
-	return fmt.Sprintf("CREATE TABLE %s ( %s );", model.TableName, coldefs), nil
+	return fmt.Sprintf("CREATE TABLE %s ( %s );", tableName, coldefs), nil
 }
 
-func (s *SQLiteGenerator) AddField(model *core.Model, field *core.Field) error {
-	return errors.New("implement me")
-}
-
-func (s *SQLiteGenerator) fieldToColDef(fld *core.Field) (string, error) {
-	typ, err := s.goTypeToSQLiteType(fld.Type)
-	if err != nil {
-		return "", err
-	}
-	return fmt.Sprintf("%s %s", fld.ColName, typ), nil
-
+func (s *SQLiteGenerator) AddField(tableName string, colDef *usecases.ColDef) string {
+	return fmt.Sprintf("ALTER TABLE %s ADD COLUMN %s %s;", tableName, colDef.Name, colDef.Type)
 }
 
 func (s *SQLiteGenerator) goTypeToSQLiteType(goType string) (string, error) {

@@ -11,44 +11,11 @@ import (
 
 	_ "github.com/mattn/go-sqlite3"
 
-	"github.com/chuckha/silks/core"
+	"github.com/chuckha/silks/usecases"
 )
 
-func TestSQLiteGenerator_CreateTable(t *testing.T) {
-	model := &core.Model{
-		Name:      "Offset",
-		TableName: "offsets",
-		Fields: map[string]*core.Field{
-			"EventType": {
-				Name:    "EventType",
-				ColName: "event_type",
-				Type:    "string",
-			},
-			"LastKnownOffset": {
-				Name:    "LastKnownOffset",
-				ColName: "last_known_offset",
-				Type:    "int",
-			},
-			"IsTrue": {
-				Name:    "IsTrue",
-				ColName: "is_true",
-				Type:    "bool",
-			},
-		},
-	}
-	s := &SQLiteGenerator{}
-	ct, err := s.CreateTable(model)
-	if err != nil {
-		t.Fatal(err)
-	}
-	if strings.Contains(ct, "EventType") {
-		t.Fatal("needs to use colname to generate column names")
-	}
-	fmt.Println(ct)
-	testSql(t, ct)
-}
-
-func testSql(t *testing.T, sqlStmt string) {
+func TestSQLiteGenerator(t *testing.T) {
+	// sql set up
 	dir, err := ioutil.TempDir("", "testing")
 	if err != nil {
 		t.Fatal(err)
@@ -58,8 +25,39 @@ func testSql(t *testing.T, sqlStmt string) {
 	if err != nil {
 		t.Fatal(err)
 	}
-	if _, err := db.Exec(sqlStmt); err != nil {
-		t.Fatal(err)
+
+	// test set up
+	s := &SQLiteGenerator{}
+
+	tableName := "busses"
+	defs := []*usecases.ColDef{
+		{
+			"number", "string",
+		},
+		{
+			"route", "string",
+		},
 	}
 
+	t.Run("create table", func(tt *testing.T) {
+		createStmt, err := s.CreateTable(tableName, defs)
+		if err != nil {
+			tt.Fatal(err)
+		}
+		if strings.Contains(createStmt, "EventType") {
+			tt.Fatal("needs to use colname to generate column names")
+		}
+		fmt.Println(createStmt)
+		if _, err := db.Exec(createStmt); err != nil {
+			tt.Fatal(err)
+		}
+	})
+
+	t.Run("add field", func(tt *testing.T) {
+		field := &usecases.ColDef{Name: "max_passengers", Type: "int"}
+		addStmt := s.AddField(tableName, field)
+		if _, err := db.Exec(addStmt); err != nil {
+			tt.Fatal(err)
+		}
+	})
 }

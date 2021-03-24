@@ -9,35 +9,34 @@ import (
 
 type gen struct{}
 
-func (g *gen) CreateTable(model *core.Model) (string, error) {
+func (g *gen) CreateTable(tableName string, coldefs []*ColDef) (string, error) {
 	fields := []string{}
-	for _, field := range model.Fields {
-		fields = append(fields, field.ColName)
+	for _, coldef := range coldefs {
+		fields = append(fields, coldef.Name)
 	}
 	return strings.Join(fields, " "), nil
 }
 
 func TestCreateTableGenerator_GenerateCreateTable(t *testing.T) {
 	createTableGen := &CreateTableGenerator{&gen{}}
+
+	model, err := core.NewModel("User", "users")
+	if err != nil {
+		t.Fatal(err)
+	}
+	field1, err := core.NewField("Username", "username", "string")
+	if err != nil {
+		t.Fatal(err)
+	}
+	field2, err := core.NewField("Age", "age", "int")
+	if err != nil {
+		t.Fatal(err)
+	}
+	model.AddField(field1)
+	model.AddField(field2)
 	models := &core.ModelFile{
-		Models: map[string]*core.Model{
-			"User": {
-				Name:      "User",
-				TableName: "users",
-				Fields: map[string]*core.Field{
-					"Username": {
-						Name:    "Username",
-						ColName: "username",
-						Type:    "string",
-					},
-					"Age": {
-						Name:    "Age",
-						ColName: "age",
-						Type:    "int",
-					},
-				},
-			},
-		},
+		Models:     map[string]*core.Model{model.Name: model},
+		Attributes: nil,
 	}
 	o, err := createTableGen.GenerateCreateTable(models)
 	if err != nil {
