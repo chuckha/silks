@@ -2,9 +2,17 @@
 
 Another way to manage migrations if you have defined some structs that you want stored in a database.
 
+## When and how to use this project
+
+`silks` works best when a project can put all the models of your system that need to be represented in SQL into one file.
+
+This works particularly well if the project is following an architecture that uses dependency inversion. At some point,
+the domain models will become translated into models that will fit into a database (and vice versa).
+The file that defines those types is what this project is for. It helps keep your database in sync with the Go file.
+
 ## Model File
 
-Create a model file that is pure Go structs. The only imported package that is supported is `time`.
+Create a model file that contains only pure Go structs. The only imported package that is supported is `time`.
 
 ### Annotations
 
@@ -18,3 +26,4 @@ Silks will reformat that file for you (TODO: right now it only prints the update
 
 `create` -> Generates create table statements
 `add` -> Adds a new field to the specified go struct and a new column to the associated table.
+`rename` -> Renames an existing field on a model to a new name.
