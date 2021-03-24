@@ -25,5 +25,7 @@ Silks will reformat that file (TODO: right now it only prints the updated and fo
 ## Actions
 
 `create` -> Generates create table statements
+
 `add` -> Adds a new field to the specified go struct and a new column to the associated table.
+
 `rename` -> Renames an existing field on a model to a new name.
