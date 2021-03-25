@@ -20,7 +20,7 @@ import "time"
 // User defines the users model
 // User.tablename=users
 type User struct {
-	ID string ` + "`slk:\"id\"`" + `
+	ID string ` + "`json:\"id\" slk:\"id,pk\"`" + `
 	Created time.Time ` + "`slk:\"created\"`" + `
 	Updated time.Time
 }

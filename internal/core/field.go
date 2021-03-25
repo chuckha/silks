@@ -8,6 +8,13 @@ import (
 	"github.com/pkg/errors"
 )
 
+const (
+	// SilksTag is the struct tag used for metadata.
+	// The format is a comma separated list.
+	// The first item is the column name for a given field
+	SilksTag = "slk"
+)
+
 func NewField(name, t, colName string) (field, error) {
 	if name == "" {
 		return field{}, errors.New("fields must have a name")
@@ -63,28 +70,41 @@ func FieldFromASTField(fld *ast.Field) (field, error) {
 		return field{}, errors.Errorf("unknown field type on field `%s`", fld.Names[0].Name)
 	}
 	var col = ""
-	if fld.Tag != nil {
-		key, value, err := grabKeyValueFromTag(fld.Tag.Value)
+	if fld.Tag != nil { // TODO: test a complex tag (`json:"hello" xml:"hi" slk:"greeting,pk"`)
+		slkVals, err := slkValuesFromTag(fld.Tag.Value)
 		if err != nil {
 			return field{}, err
 		}
-		if key == "slk" {
-			col = value
+		if len(slkVals) > 0 {
+			if len(slkVals[0]) > 0 {
+				col = slkVals[0]
+			}
 		}
 	}
 	return NewField(fld.Names[0].Name, typ, col)
 }
 
-func grabKeyValueFromTag(tag string) (string, string, error) {
+func slkValuesFromTag(tag string) ([]string, error) {
 	tag = strings.Trim(tag, "`")
-	parts := strings.Split(tag, ":")
-	if parts[0] != "slk" {
-		return "", "", nil
+	pkgTags := strings.Split(tag, " ")
+	slksTag := ""
+	for _, tag := range pkgTags {
+		if strings.HasPrefix(tag, SilksTag) {
+			slksTag = tag
+			break
+		}
 	}
-	if len(parts) < 1 {
-		return "", "", errors.New(`slk tag is malformed, must be key:"val"`)
+
+	// there is no silks tag
+	if slksTag == "" {
+		return nil, nil
 	}
-	key := parts[0]
+
+	parts := strings.Split(slksTag, ":")
+	// slk tag exists but it's empty `slk`
+	if len(parts) < 2 {
+		return nil, errors.New(`slk tag is malformed, must be key:"val1,val2,val3"`)
+	}
 	value := strings.Trim(parts[1], `"`)
-	return key, value, nil
+	return strings.Split(value, ","), nil
 }

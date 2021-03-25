@@ -6,6 +6,20 @@ import (
 	"testing"
 )
 
+func TestPrimaryKey(t *testing.T) {
+	model, err := NewModel("Utensil")
+	if err != nil {
+		t.Fatal(err)
+	}
+	field, err := NewField("Shape", "string", "shape")
+	if err != nil {
+		t.Fatal(err)
+	}
+	if err := model.AddField(field); err != nil {
+		t.Fatal(err)
+	}
+}
+
 func TestNewModel(t *testing.T) {
 	model, err := NewModel("Animal")
 	if err != nil {
@@ -28,7 +42,9 @@ func TestNewModelFromAST(t *testing.T) {
 	if err != nil {
 		t.Fatal(err)
 	}
-	mod.AddField(field)
+	if err := mod.AddField(field); err != nil {
+		t.Fatal(err)
+	}
 	//printer.Fprint(os.Stdout, fset, mod.def)
 }
 
