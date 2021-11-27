@@ -37,6 +37,7 @@ type renamecfg struct {
 }
 
 func main() {
+	// TODO default config file name, maybe config.json
 	cfgfile := os.Getenv("SILKS_CONFIG")
 	if cfgfile == "" {
 		panic("a configuraiton is required (set SILKS_CONFIG env var)")
@@ -69,17 +70,23 @@ func main() {
 		panic(err)
 	}
 
+	if len(os.Args) < 2 {
+		fmt.Println("subcommand required: init, add or rename")
+		os.Exit(1)
+	}
+
 	switch os.Args[1] {
 	case "init":
 		sqls, err := app.GenerateCreateTable(config.ModelFile)
 		if err != nil {
-			panic(err)
+			panic(fmt.Sprintf("%+v", err))
 		}
 		fmt.Println(sqls)
 	case "add":
 		err = addFlags.Parse(os.Args[2:])
 		if err != nil {
-			panic(fmt.Sprintf("%+v", err))
+			addFlags.PrintDefaults()
+			os.Exit(1)
 		}
 		addsql, updateModel, err := app.AddField(config.ModelFile, addCfg.model, addCfg.field, addCfg.fieldType, addCfg.colName)
 		if err != nil {
@@ -90,7 +97,8 @@ func main() {
 	case "rename":
 		err = renameFlags.Parse(os.Args[2:])
 		if err != nil {
-			panic(fmt.Sprintf("%+v", err))
+			renameFlags.PrintDefaults()
+			os.Exit(1)
 		}
 		renamesql, renameModel, err := app.RenameField(config.ModelFile, renameCfg.model, renameCfg.from, renameCfg.to, renameCfg.toColName)
 		// rename a model field from x to y

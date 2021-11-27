@@ -55,9 +55,15 @@ func (f field) Tag() *ast.BasicLit {
 func FieldFromASTField(fld *ast.Field) (field, error) {
 	var typ string
 	switch v := fld.Type.(type) {
-	case *ast.Ident:
+	case *ast.Ident: // handle basic field types (int, string, etc)
 		typ = v.Name
-	case *ast.SelectorExpr:
+	case *ast.ArrayType:
+		ident := v.Elt.(*ast.Ident)
+		if ident.Name != "byte" {
+			return field{}, errors.Errorf("unsupported slice type %q, only byte slices are supported", ident)
+		}
+		typ = "blob"
+	case *ast.SelectorExpr: // handle package types, only accets `time`
 		pkg, ok := v.X.(*ast.Ident)
 		if !ok {
 			return field{}, errors.New("the package must be an identifier")
@@ -67,7 +73,7 @@ func FieldFromASTField(fld *ast.Field) (field, error) {
 		}
 		typ = fmt.Sprintf("%s.%s", pkg.Name, v.Sel.String())
 	default:
-		return field{}, errors.Errorf("unknown field type on field `%s`", fld.Names[0].Name)
+		return field{}, errors.Errorf("unknown field type `%T` on field `%s`", v, fld.Names[0].Name)
 	}
 	var col = ""
 	if fld.Tag != nil { // TODO: test a complex tag (`json:"hello" xml:"hi" slk:"greeting,pk"`)
